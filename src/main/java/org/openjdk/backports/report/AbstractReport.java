@@ -28,6 +28,7 @@ import com.atlassian.jira.rest.client.api.IssueRestClient;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.SearchRestClient;
 import com.atlassian.jira.rest.client.api.domain.Issue;
+import org.openjdk.backports.Main;
 import org.openjdk.backports.StringUtils;
 import org.openjdk.backports.jira.Issues;
 import org.openjdk.backports.jira.UserCache;
@@ -62,10 +63,10 @@ public abstract class AbstractReport {
     protected final Issues jiraIssues;
 
     public AbstractReport(JiraRestClient restClient) {
-        this.out = System.out;
+        this.out = Main.out;
         this.searchCli = restClient.getSearchClient();
         this.issueCli = restClient.getIssueClient();
-        this.jiraIssues = new Issues(out, searchCli, issueCli);
+        this.jiraIssues = new Issues(Main.debug, searchCli, issueCli);
         this.users = new UserCache(restClient.getUserClient());
     }
 

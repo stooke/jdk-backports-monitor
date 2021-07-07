@@ -48,7 +48,9 @@ public class Options {
     private boolean directOnly;
     private Integer parityReport;
     private boolean doCSV;
+    private boolean verboseReports;
     private boolean includeCarryovers;
+    private String outputFilename;
 
     public Options(String[] args) {
         this.args = args;
@@ -90,9 +92,14 @@ public class Options {
         OptionSpec<Actionable> optMinLevel = parser.accepts("min-level", "Minimal actionable level to print")
                 .withRequiredArg().ofType(Actionable.class).describedAs("level").defaultsTo(Actionable.NONE);
 
+        OptionSpec<String> optOutputFilename = parser.accepts("output", "Output filename (defaults to stdout)")
+                .withRequiredArg().ofType(String.class).describedAs("filename");
+
         OptionSpec<Void> optIncludeDownstream = parser.accepts("include-downstream", "Include downstream repos in reports");
 
         OptionSpec<Void> optCSV = parser.accepts("csv", "Machine-readable CSV output (some reports only)");
+
+        OptionSpec<Void> optVerboseReports = parser.accepts("verbose", "Create verbose reports (where implemented)");
 
         OptionSpec<Void> optAffiliationReport = parser.accepts("affiliation", "Create affiliation report");
 
@@ -132,7 +139,9 @@ public class Options {
         includeDownstream = set.has(optIncludeDownstream);
         directOnly = set.has(optDirectOnly);
         doCSV = set.has(optCSV);
+        verboseReports = set.has(optVerboseReports);
         includeCarryovers = set.has(optIncludeCarryovers);
+        outputFilename = set.has(optOutputFilename) ? optOutputFilename.value(set) : "-";
 
         return true;
     }
@@ -187,6 +196,12 @@ public class Options {
 
     public boolean doCSV() { return doCSV; }
 
+    public boolean doVerboseReports() { return verboseReports; }
+
     public boolean includeCarryovers() { return includeCarryovers; }
+
+    public String getOutputFilename() {
+        return outputFilename;
+    }
 
 }

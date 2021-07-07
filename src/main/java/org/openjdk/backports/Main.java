@@ -30,11 +30,14 @@ import org.openjdk.backports.report.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Properties;
 
 public class Main {
 
     public static final String JIRA_URL = "https://bugs.openjdk.java.net/";
+    public static PrintStream out = System.out;
+    public static PrintStream debug = System.err;
 
     public static void main(String[] args) {
         Options options = new Options(args);
@@ -53,6 +56,10 @@ public class Main {
 
                 if (user == null || pass == null) {
                     throw new IllegalStateException("user/pass keys are missing in auth file: " + options.getAuthProps());
+                }
+
+                if (options.getOutputFilename() != null && !options.getOutputFilename().equals("-")) {
+                    out = new PrintStream(options.getOutputFilename());
                 }
 
                 try (JiraRestClient cli = Connect.getJiraRestClient(JIRA_URL, user, pass)) {
@@ -92,8 +99,15 @@ public class Main {
                     }
 
                     if (options.getParityReport() != null) {
-                        new ParityReport(cli, options.getParityReport()).run();
+                        if (options.doCSV()) {
+                            new CsvParityReport(cli, options.getParityReport(), options.doVerboseReports()).run();
+                        } else {
+                            new ParityReport(cli, options.getParityReport()).run();
+                        }
                     }
+                }
+                if (out != System.out) {
+                    out.close();
                 }
             }
         } catch (Exception e) {
