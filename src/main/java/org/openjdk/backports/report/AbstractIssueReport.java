@@ -372,6 +372,7 @@ public abstract class AbstractIssueReport extends AbstractReport {
                 if (Versions.parseMinor(fixVersion) <= 212) return;
                 break;
             case 11:
+            case 17:
                 if (!fixVersion.contains("-oracle")) return;
                 break;
             default:
