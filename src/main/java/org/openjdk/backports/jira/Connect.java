@@ -41,13 +41,12 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static JiraRestClient getJiraRestClient(String jiraURL, String user, String pass) throws URISyntaxException {
-        System.setProperty("com.atlassian.httpclient.options.threadWorkQueueLimit", String.valueOf(64*1024));
-
+    public static Clients getClients(String jiraURL, String user, String pass) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -66,6 +65,14 @@ public class Connect {
         opts.setSocketTimeout(2, TimeUnit.MINUTES);
         opts.setLeaseTimeout(TimeUnit.MINUTES.toMillis(30));
 
+        // And configure the cache as well. 5K x 100K = 500M cache "should be enough".
+        opts.setMaxCacheEntries(5_000);
+        opts.setMaxCacheObjectSize(100_000);
+
+        // Make sure we have enough threads to process the requests.
+        // Choose the most scalable executor availabe.
+        opts.setCallbackExecutor(Executors.newWorkStealingPool());
+
         HttpClient client = factory.create(opts);
 
         DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(
@@ -74,7 +81,10 @@ public class Connect {
                     @Override public void destroy() throws Exception { factory.dispose(client); }
         };
 
-        return new AsynchronousJiraRestClient(uri, dispClient);
+        return new Clients(
+                new AsynchronousJiraRestClient(uri, dispClient),
+                new RawRestClient(uri, dispClient)
+        );
     }
 
     private static class MyEventPublisher implements EventPublisher {

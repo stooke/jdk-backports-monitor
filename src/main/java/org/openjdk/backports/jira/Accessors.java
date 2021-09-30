@@ -40,7 +40,8 @@ public class Accessors {
         }
         Version fixVersion = it.next();
         if (it.hasNext()) {
-            throw new IllegalStateException("Multiple fix versions: " + issue.getKey());
+            // TODO: Deal with this properly. See for example JDK-8259847.
+            return "ERROR";
         }
         return fixVersion.getName();
     }
@@ -64,6 +65,16 @@ public class Accessors {
                 return Parsers.parseURL(c.getBody());
             }
         }
+
+        String fixVersion = getFixVersion(issue);
+        if (Versions.parseMajor(fixVersion) >= 11 &&
+            Versions.parseMinor(fixVersion) == 1) {
+
+            // Oh yeah, issues would have these versions set as "fix", but there would
+            // be no public pushes until CPU releases. Awesome.
+            return "(The push URL is not available until CPU is released)";
+        }
+
         return "N/A";
     }
 
@@ -191,6 +202,14 @@ public class Accessors {
         return issue.getLabels().contains("openjdk" + majorVer + "u-WNF");
     }
 
+    public static boolean ifUpdateReleaseNo(Issue issue, int majorVer) {
+        return issue.getLabels().contains("jdk" + majorVer + "u-fix-no");
+    }
+
+    public static boolean ifUpdateReleaseNA(Issue issue, int majorVer) {
+        return issue.getLabels().contains("jdk" + majorVer + "u-na");
+    }
+
     public static boolean isReleaseNoteTag(Issue issue) {
         return issue.getLabels().contains("release-note");
     }
@@ -202,37 +221,16 @@ public class Accessors {
                 && isDelivered(issue);
     }
 
-    public static Collection<Issue> getReleaseNotes(IssueRestClient cli, Issue start) {
-        List<RetryableIssuePromise> relnotes = new ArrayList<>();
-        Set<Issue> releaseNotes = new HashSet<>();
-
-        // Direct hit?
-        if (isReleaseNote(start)) {
-            releaseNotes.add(start);
-        }
-
-        // Search in sub-tasks
-        for (Subtask link : start.getSubtasks()) {
-            String linkKey = link.getIssueKey();
-            relnotes.add(new RetryableIssuePromise(null, cli, linkKey));
-        }
-
-        // Search in related issues
-        for (IssueLink link : start.getIssueLinks()) {
-            if (link.getIssueLinkType().getName().equals("Relates")) {
-                String linkKey = link.getTargetIssueKey();
-                relnotes.add(new RetryableIssuePromise(null, cli, linkKey));
+    public static Collection<String> getReviewURLs(RawRestClient raw, Issue issue, int majorVer) {
+        Collection<String> res = new ArrayList<>();
+        for (String link : raw.remoteLinks(issue.getKey())) {
+            if (link.contains("jdk" + majorVer + "/pull/") ||
+                link.contains("jdk" + majorVer + "u/pull/") ||
+                link.contains("jdk" + majorVer + "u-dev/pull/")) {
+                res.add(link);
             }
         }
-
-        for (RetryableIssuePromise p : relnotes) {
-            Issue i = p.claim();
-            if (isReleaseNote(i)) {
-                releaseNotes.add(i);
-            }
-        }
-
-        return releaseNotes;
+        return res;
     }
 
 }

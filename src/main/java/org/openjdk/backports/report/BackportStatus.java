@@ -22,38 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+public enum BackportStatus {
 
-    public Actions() {
-        actionable = Actionable.NONE;
-    }
-
-    public void update(Actionable act) {
-        update(act, 0);
-    }
-
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
-    }
-
-    @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
-        }
-        return Integer.compare(other.importance, importance);
-    }
-
-    public Actionable getActionable() {
-        return actionable;
-    }
+    NOT_AFFECTED,
+    INHERITED,
+    FIXED,
+    BAKING,
+    MISSING,
+    MISSING_ORACLE,
+    APPROVED,
+    REJECTED,
+    REQUESTED,
+    WARNING,
+    ;
 
 }

@@ -22,38 +22,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report.csv;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import org.openjdk.backports.report.model.IssueModel;
+import org.openjdk.backports.report.model.PendingPushModel;
 
-    public Actions() {
-        actionable = Actionable.NONE;
-    }
+import java.io.PrintStream;
 
-    public void update(Actionable act) {
-        update(act, 0);
-    }
+public class PendingPushCSVReport extends AbstractCSVReport {
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
+    private final PendingPushModel model;
+
+    public PendingPushCSVReport(PendingPushModel model, PrintStream debugLog, String logPrefix) {
+        super(debugLog, logPrefix);
+        this.model = model;
     }
 
     @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
+    protected void doGenerate(PrintStream out) {
+        for (IssueModel m : model.models()) {
+            new IssueCSVReport(m, debugLog, logPrefix).generateSimple(out);
         }
-        return Integer.compare(other.importance, importance);
-    }
-
-    public Actionable getActionable() {
-        return actionable;
     }
 
 }

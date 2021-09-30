@@ -22,38 +22,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report.csv;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import org.openjdk.backports.report.Common;
 
-    public Actions() {
-        actionable = Actionable.NONE;
+import java.io.IOException;
+import java.io.PrintStream;
+
+abstract class AbstractCSVReport extends Common {
+
+    protected final PrintStream debugLog;
+    protected final String logPrefix;
+
+    public AbstractCSVReport(PrintStream debugLog, String logPrefix) {
+        this.debugLog = debugLog;
+        this.logPrefix = logPrefix;
     }
 
-    public void update(Actionable act) {
-        update(act, 0);
+    public final void generate() throws IOException {
+        String fileName = logPrefix + ".csv";
+        PrintStream out = new PrintStream(fileName);
+        debugLog.println("Generating CSV log to " + fileName);
+        doGenerate(out);
+        out.close();
     }
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
-    }
-
-    @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
-        }
-        return Integer.compare(other.importance, importance);
-    }
-
-    public Actionable getActionable() {
-        return actionable;
-    }
+    protected abstract void doGenerate(PrintStream out);
 
 }

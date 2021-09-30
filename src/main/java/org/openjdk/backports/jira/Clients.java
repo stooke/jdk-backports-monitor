@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2021, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.jira;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import com.atlassian.jira.rest.client.api.JiraRestClient;
 
-    public Actions() {
-        actionable = Actionable.NONE;
+public class Clients implements AutoCloseable {
+    private final JiraRestClient jiraRest;
+    private final RawRestClient rawRest;
+
+    public Clients(JiraRestClient jiraRest, RawRestClient rawRest) {
+        this.jiraRest = jiraRest;
+        this.rawRest = rawRest;
     }
 
-    public void update(Actionable act) {
-        update(act, 0);
+    public JiraRestClient getJiraRest() {
+        return jiraRest;
     }
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
+    public RawRestClient getRawRest() {
+        return rawRest;
     }
 
     @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
-        }
-        return Integer.compare(other.importance, importance);
+    public void close() throws Exception {
+        jiraRest.close();
     }
-
-    public Actionable getActionable() {
-        return actionable;
-    }
-
 }

@@ -130,7 +130,7 @@ questions.
         <dependency>
             <groupId>net.sf.jopt-simple</groupId>
             <artifactId>jopt-simple</artifactId>
-            <version>4.9</version>
+            <version>5.0.4</version>
         </dependency>
         <dependency>
             <groupId>com.atlassian.jira</groupId>
@@ -145,7 +145,17 @@ questions.
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.13.1</version>
+            <version>1.14.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.rjeschke</groupId>
+            <artifactId>txtmark</artifactId>
+            <version>0.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20190722</version>
         </dependency>
         <dependency>
             <groupId>com.opencsv</groupId>

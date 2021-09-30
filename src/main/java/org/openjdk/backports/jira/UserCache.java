@@ -186,6 +186,14 @@ public class UserCache {
             "@icloud.com",
             "@jonathangiles.net",
             "@ngmr",
+            "@126.com",
+            "@protonmail.com",
+            "@headcrashing.eu",
+            "@hotmail.com",
+            "@udel.edu",
+            "@javaspecialists.eu",
+            "@selskabet.org",
+            "@qq.com",
     };
 
     static final String[][] COMPANIES = {
@@ -229,6 +237,7 @@ public class UserCache {
             {"@fujitsu.com", "Fujitsu"},
             {"@marvell.com", "Marvell"},
             {"@tagtraum.com", "Tagtraum"},
+            {"@fb.com", "Facebook"},
     };
 
     static final String[][] SPECIAL_CASES = {
@@ -240,6 +249,7 @@ public class UserCache {
             {"Marcus Hirt", "DataDog"},
             {"John Paul Adrian Glaubitz", "Debian"},
             {"Lukas Eder", "DataGeekery"},
+            {"Andrew Haley", "Red Hat"},
     };
 
     private String generifyAffiliation(String full, String v) {

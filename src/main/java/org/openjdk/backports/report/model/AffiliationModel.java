@@ -22,38 +22,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report.model;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import org.openjdk.backports.jira.Clients;
+import org.openjdk.backports.jira.UserCache;
 
-    public Actions() {
-        actionable = Actionable.NONE;
-    }
+import java.io.PrintStream;
+import java.util.List;
 
-    public void update(Actionable act) {
-        update(act, 0);
-    }
+public class AffiliationModel extends AbstractModel {
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
+    private final List<String> userIds;
+
+    public AffiliationModel(Clients clients, PrintStream debugOut) {
+        super(clients, debugOut);
+
+        userIds = users.resolveCensus();
+
+        debugOut.print("Got " + userIds.size() + " users, resolving");
+
+        int cnt = 0;
+        for (String uid : userIds) {
+            if (cnt++ % 50 == 0) debugOut.print(".");
+            users.getDisplayName(uid);
+            users.getAffiliation(uid);
         }
+        debugOut.println();
+        debugOut.println("Resolved " + userIds.size() + " users.");
     }
 
-    @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
-        }
-        return Integer.compare(other.importance, importance);
+    public List<String> userIds() {
+        return userIds;
     }
 
-    public Actionable getActionable() {
-        return actionable;
+    public UserCache users() {
+        return users;
     }
-
 }

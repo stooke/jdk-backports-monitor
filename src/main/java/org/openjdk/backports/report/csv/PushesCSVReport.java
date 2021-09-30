@@ -22,38 +22,40 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report.csv;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import org.openjdk.backports.jira.Accessors;
+import org.openjdk.backports.jira.UserCache;
+import org.openjdk.backports.report.model.PushesModel;
 
-    public Actions() {
-        actionable = Actionable.NONE;
+import java.io.PrintStream;
+
+public class PushesCSVReport extends AbstractCSVReport {
+
+    private final PushesModel model;
+
+    public PushesCSVReport(PushesModel model, PrintStream debugLog, String logPrefix) {
+        super(debugLog, logPrefix);
+        this.model = model;
     }
 
-    public void update(Actionable act) {
-        update(act, 0);
-    }
+    protected void doGenerate(PrintStream out) {
+        UserCache users = model.users();
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
+        for (Issue i : model.byTime()) {
+            String pushUser = Accessors.getPushUser(i);
+            out.printf("\"%s\", \"%s\", \"%s\", \"%s\"%n",
+                    i.getKey(),
+                    i.getSummary(),
+                    users.getDisplayName(pushUser),
+                    users.getAffiliation(pushUser));
         }
-    }
-
-    @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
+        for (Issue i : model.noChangesets()) {
+            out.printf("\"%s\", \"%s\", \"N/A\", \"N/A\"%n",
+                    i.getKey(),
+                    i.getSummary());
         }
-        return Integer.compare(other.importance, importance);
-    }
-
-    public Actionable getActionable() {
-        return actionable;
     }
 
 }

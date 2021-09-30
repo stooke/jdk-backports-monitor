@@ -22,38 +22,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report.csv;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import com.atlassian.jira.rest.client.api.domain.Issue;
+import org.openjdk.backports.report.model.ParityModel;
 
-    public Actions() {
-        actionable = Actionable.NONE;
-    }
+import java.io.PrintStream;
+import java.util.Map;
 
-    public void update(Actionable act) {
-        update(act, 0);
-    }
+public class ParityCSVReport extends AbstractCSVReport {
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
+    private final ParityModel model;
+
+    public ParityCSVReport(ParityModel model, PrintStream debugLog, String logPrefix) {
+        super(debugLog, logPrefix);
+        this.model = model;
     }
 
     @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
-        }
-        return Integer.compare(other.importance, importance);
-    }
+    protected void doGenerate(PrintStream out) {
+        Map<String, Map<Issue, ParityModel.SingleVersMetadata>> map = model.onlyOracle();
 
-    public Actionable getActionable() {
-        return actionable;
+        for (String rel : map.keySet()) {
+            Map<Issue, ParityModel.SingleVersMetadata> m = map.get(rel);
+            for (Issue k : m.keySet()) {
+                out.printf("\"%s\", \"%s\", \"%s\"%n",
+                        k.getKey(),
+                        k.getSummary(),
+                        m.get(k));
+            }
+        }
     }
 
 }

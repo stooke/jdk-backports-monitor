@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2020, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,38 +22,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.openjdk.backports;
+package org.openjdk.backports.report.csv;
 
-public class Actions implements Comparable<Actions> {
-    Actionable actionable;
-    int importance;
+import org.openjdk.backports.report.model.LabelHistoryModel;
 
-    public Actions() {
-        actionable = Actionable.NONE;
-    }
+import java.io.PrintStream;
 
-    public void update(Actionable act) {
-        update(act, 0);
-    }
+public class LabelHistoryCSVReport extends AbstractCSVReport {
 
-    public void update(Actionable act, int impt) {
-        actionable = actionable.mix(act);
-        if (act.ordinal() > Actionable.NONE.ordinal()) {
-            importance += impt;
-        }
+    private final LabelHistoryModel model;
+
+    public LabelHistoryCSVReport(LabelHistoryModel model, PrintStream debugLog, String logPrefix) {
+        super(debugLog, logPrefix);
+        this.model = model;
     }
 
     @Override
-    public int compareTo(Actions other) {
-        int v1 = Integer.compare(other.actionable.ordinal(), actionable.ordinal());
-        if (v1 != 0) {
-            return v1;
+    protected void doGenerate(PrintStream out) {
+        for (LabelHistoryModel.Record r : model.records()) {
+            out.printf("\"%s\", \"%s\", \"%s\", \"%s\"%n",
+                    r.date.toLocalDate().toString(),
+                    r.user,
+                    r.issue.getKey(),
+                    r.issue.getSummary());
         }
-        return Integer.compare(other.importance, importance);
     }
 
-    public Actionable getActionable() {
-        return actionable;
-    }
 
 }

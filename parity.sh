@@ -1,8 +1,10 @@
 #!/bin/bash
 
+## Don't forget to do 'mvn package' after source code changes
+
 DATE_STR=`date --rfc-3339=date`
 JARFILE="`pwd`/target/jdk-backports-monitor.jar"
 
-java -jar "$JARFILE" --csv --parity 11 --output data/$DATE_STR-parity-11u.csv
-java -jar "$JARFILE" --csv --parity 8  --output data/$DATE_STR-parity-8u.csv
-java -jar "$JARFILE" --csv --parity 17 --output data/$DATE_STR-parity-17u.csv
+java -jar "$JARFILE" --verbose --parity 11 --output-prefix data/$DATE_STR-parity-11u
+java -jar "$JARFILE" --verbose --parity 8  --output-prefix data/$DATE_STR-parity-8u
+java -jar "$JARFILE" --verbose --parity 17 --output-prefix data/$DATE_STR-parity-17u
