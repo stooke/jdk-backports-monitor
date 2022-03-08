@@ -132,10 +132,11 @@ public class Main {
                     }
 
                     if (options.getParityReport() != null) {
-                        ParityModel m = new ParityModel(cli, debugLog, options.getParityReport());
+                        ParityModel m = new ParityModel(cli, debugLog, options.getParityReport(), options.getIssueList());
                         new ParityTextReport(m, debugLog, logPrefix).generate();
                         if (options.doVerboseReports()) {
-                            new VerboseCsvParityReport(m, debugLog, logPrefix).generate();
+                            boolean isSingleMode = !options.getIssueList().isEmpty();
+                            new VerboseCsvParityReport(m, debugLog, logPrefix, isSingleMode).generate();
                         } else {
                             new ParityCSVReport (m, debugLog, logPrefix).generate();
                         }

@@ -30,6 +30,8 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Vector;
 
 public class Options {
     private final String[] args;
@@ -50,6 +52,8 @@ public class Options {
     private boolean includeCarryovers;
     private boolean verboseReports;
     private String outputFilename;
+    private String issueListString;
+    private final Vector<String> issueList = new Vector<>(10);
 
     public Options(String[] args) {
         this.args = args;
@@ -101,6 +105,10 @@ public class Options {
         OptionSpec<String> optUpdateHgDB = parser.accepts("hg-repos",
                 "Use these repositories for Mercurial metadata")
                 .withRequiredArg().ofType(String.class).describedAs("paths-to-local-hg");
+
+        OptionSpec<String> optIssueList = parser.accepts("issues",
+                        "List of relevant issue numbers separated by comma ")
+                .withRequiredArg().ofType(String.class).describedAs("issue-list-string");
 
         OptionSpec<Actionable> optMinLevel = parser.accepts("min-level",
                 "Minimal actionable level to print.")
@@ -163,6 +171,7 @@ public class Options {
         includeCarryovers = set.has(optIncludeCarryovers);
         verboseReports = set.has(optVerboseReports);
         outputFilename = set.has(optOutputFilename) ? optOutputFilename.value(set) : "-";
+        issueListString = optIssueList.value(set);
 
         return true;
     }
@@ -210,6 +219,13 @@ public class Options {
     public String getHgRepos() { return hgRepos; }
 
     public Actionable getMinLevel() { return minLevel; }
+
+    public Vector<String> getIssueList() {
+        if (issueListString != null) {
+            Collections.addAll(issueList, issueListString.split(","));
+        }
+        return issueList;
+    }
 
     public boolean directOnly() { return directOnly; }
 

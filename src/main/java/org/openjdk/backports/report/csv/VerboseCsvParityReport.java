@@ -24,30 +24,25 @@
  */
 package org.openjdk.backports.report.csv;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
 import com.atlassian.jira.rest.client.api.domain.*;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.opencsv.CSVWriter;
 import org.openjdk.backports.Main;
-import org.openjdk.backports.jira.Accessors;
-import org.openjdk.backports.jira.InterestTags;
-import org.openjdk.backports.jira.Versions;
 import org.openjdk.backports.report.model.ParityModel;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.time.LocalDateTime;
 import java.util.*;
 
 public class VerboseCsvParityReport extends AbstractCSVReport {
 
     private final ParityModel model;
+    private final boolean isSingleMode;
 
-    public VerboseCsvParityReport(ParityModel model, PrintStream debugLog, String logPrefix) {
+    public VerboseCsvParityReport(ParityModel model, PrintStream debugLog, String logPrefix, boolean isSingleMode) {
         super(debugLog, logPrefix);
         this.model = model;
+        this.isSingleMode = isSingleMode;
     }
 
     @Override
@@ -57,14 +52,43 @@ public class VerboseCsvParityReport extends AbstractCSVReport {
             CSVWriter writer = new CSVWriter(new PrintWriter(out));
             writer.writeNext(header.split(","));
 
-            printWithVersion(writer, model.onlyOracle());
-            printWithVersion(writer, model.onlyOpen());
+            if (isSingleMode) {
+                printSingle(writer, model.getAll());
+            } else {
+                printWithVersion(writer, model.onlyOracle());
+                printWithVersion(writer, model.onlyOpen());
+            }
 
             if (out != System.out) {
                 writer.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    void printSingle(CSVWriter writer, Map<String, Issue> issues) {
+        for (Issue issue : issues.values()) {
+            String[] entries = new String[10];
+            int index = 0;
+            entries[index++] = issue.getKey();
+            entries[index++] = issue.getCreationDate().toString("yyy-MM-dd");
+            entries[index++] = issue.getPriority() != null ? issue.getPriority().getName() : "";
+            String componentStr = null;
+            for (BasicComponent c : issue.getComponents()) {
+                componentStr = (componentStr == null) ? c.getName() : "," + c.getName();
+            }
+            entries[index++] = componentStr;
+            entries[index++] = "";
+            Resolution resolution = issue.getResolution();
+            Status status = issue.getStatus();
+            Iterable<Version> versions = issue.getFixVersions();
+            entries[index++] = "";
+            entries[index++] = "";
+            entries[index++] = "";
+            entries[index++] = issue.getSummary();
+            entries[index] = issue.getDescription();
+            writer.writeNext(entries);
         }
     }
 
@@ -92,7 +116,9 @@ public class VerboseCsvParityReport extends AbstractCSVReport {
                 writer.writeNext(entries);
             }
             for (Map.Entry<Issue, ParityModel.SingleVersMetadata> kv2 : kv.getValue().entrySet()) {
-                Main.debug.format("%20s %s\n", kv2.getValue().firstOpenRaw() + kv2.getValue().firstOracleRaw(), kv2.getValue());
+                String firstOpenRaw = kv2.getValue().firstOpenRaw() != null ? kv2.getValue().firstOpenRaw() : "";
+                String firstOracle = kv2.getValue().firstOracleRaw() != null ? kv2.getValue().firstOracleRaw() : "";
+                Main.debug.format("%s,%20s,%20s,%s\n", kv2.getKey(), firstOpenRaw, firstOracle, kv2.getValue());
             }
             Main.debug.println();
         }

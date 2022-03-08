@@ -41,19 +41,17 @@ public class ParityModel extends AbstractModel {
     private final int majorVer;
     private final SortedMap<Issue, SingleVers> exactOpenFirst;
     private final SortedMap<Issue, SingleVers> exactOracleFirst;
+    private final SortedMap<String, Issue> allIssues;
     private final SortedMap<Issue, DoubleVers> exactUnknown;
     private final SortedMap<Issue, DoubleVers> lateOpenFirst;
     private final SortedMap<Issue, DoubleVers> lateOracleFirst;
     private final Map<String, Map<Issue, SingleVersMetadata>> onlyOpen;
     private final Map<String, Map<Issue, SingleVers>> openRejected;
     private final Map<String, Map<Issue, SingleVersMetadata>> onlyOracle;
+
     private int versLen;
 
-    public ParityModel(Clients clients, PrintStream debugOut, int majorVer) {
-        super(clients, debugOut);
-        this.majorVer = majorVer;
-
-        Multimap<Issue, Issue> mp = HashMultimap.create();
+    private void collectIssues(Multimap<Issue, Issue> mp) {
 
         List<String> vers = new ArrayList<>();
 
@@ -96,12 +94,36 @@ public class ParityModel extends AbstractModel {
                 }
             }
         }
+    }
+
+    void fetchIssues(Multimap<Issue, Issue> mp, Vector<String> issueList) {
+
+        for (String issueName : issueList) {
+            List<Issue> issues = jiraIssues.getIssues("project = JDK" + " AND key = " + issueName, true);
+            for (Issue issue : issues) {
+                mp.put(issue, issue);
+            }
+        }
+    }
+
+    public ParityModel(Clients clients, PrintStream debugOut, int majorVer, Vector<String> issueList) {
+        super(clients, debugOut);
+        this.majorVer = majorVer;
+
+        Multimap<Issue, Issue> mp = HashMultimap.create();
+
+        if (issueList == null || issueList.isEmpty()) {
+            collectIssues(mp);
+        } else {
+            fetchIssues(mp, issueList);
+        }
 
         debugOut.println("Discovered " + mp.size() + " issues.");
 
         onlyOpen = new TreeMap<>(Versions::compare);
         openRejected = new TreeMap<>(Versions::compare);
         onlyOracle = new TreeMap<>(Versions::compare);
+        allIssues = new TreeMap<>();
 
         exactOpenFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
         exactOracleFirst = new TreeMap<>(DEFAULT_ISSUE_SORT);
@@ -118,10 +140,11 @@ public class ParityModel extends AbstractModel {
             LocalDateTime timeOracle = null;
             LocalDateTime timeOpen = null;
 
+            allIssues.put(p.getKey(), p);
+
             // Awkward hack: parent needs to be counted for parity, on the off-chance
             // it has the fix-version after the open/closed split.
-            List<Issue> issues = new ArrayList<>();
-            issues.addAll(mp.get(p)); // all sub-issues
+            List<Issue> issues = new ArrayList<>(mp.get(p)); // all sub-issues
             issues.add(p);            // and the issue itself
 
             for (Issue subIssue : issues) {
@@ -215,6 +238,10 @@ public class ParityModel extends AbstractModel {
 
     public int majorVer() {
         return majorVer;
+    }
+
+    public Map<String, Issue> getAll() {
+        return allIssues;
     }
 
     public Map<String, Map<Issue, SingleVersMetadata>> onlyOpen() {
