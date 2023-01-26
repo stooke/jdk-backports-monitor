@@ -54,15 +54,26 @@ public class Accessors {
         return res;
     }
 
-    private static boolean isBotComment(Comment c) {
+    private static boolean isBotPushComment(Comment c) {
         String name = c.getAuthor().getName();
-        return name.equals("hgupdate") || name.equals("roboduke");
+        if (!name.equals("hgupdate") &&
+            !name.equals("roboduke") &&
+            !name.equals("dukebot")) {
+            return false;
+        }
+        if (c.getBody().contains("A pull request was submitted for review.")) {
+            return false;
+        }
+        return true;
     }
 
     public static String getPushURL(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
-                return Parsers.parseURL(c.getBody());
+            if (isBotPushComment(c)) {
+                Optional<String> opt = Parsers.parseURL(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
 
@@ -78,19 +89,13 @@ public class Accessors {
         return "N/A";
     }
 
-    public static String getPushDate(Issue issue) {
-        for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
-                return Parsers.parseDaysAgo(c.getBody()) + " day(s) ago";
-            }
-        }
-        return "N/A";
-    }
-
     public static String getPushUser(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
-                return Parsers.parseUser(c.getBody());
+            if (isBotPushComment(c)) {
+                Optional<String> opt = Parsers.parseUser(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
         return "N/A";
@@ -98,8 +103,11 @@ public class Accessors {
 
     public static long getPushDaysAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
-                return Parsers.parseDaysAgo(c.getBody());
+            if (isBotPushComment(c)) {
+                Optional<Long> opt = Parsers.parseDaysAgo(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
         return -1;
@@ -107,13 +115,15 @@ public class Accessors {
 
     public static long getPushSecondsAgo(Issue issue) {
         for (Comment c : issue.getComments()) {
-            if (isBotComment(c)) {
-                return Parsers.parseSecondsAgo(c.getBody());
+            if (isBotPushComment(c)) {
+                Optional<Long> opt = Parsers.parseSecondsAgo(c.getBody());
+                if (opt.isPresent()) {
+                    return opt.get();
+                }
             }
         }
         return -1;
     }
-
 
     public static int getPriority(Issue issue) {
         if (issue.getPriority() != null) {
@@ -216,7 +226,7 @@ public class Accessors {
 
     public static boolean isReleaseNote(Issue issue) {
         // Brilliant, we cannot trust "release-note" tags?
-        //   See: https://mail.openjdk.java.net/pipermail/jdk-dev/2019-July/003083.html
+        //   See: https://mail.openjdk.org/pipermail/jdk-dev/2019-July/003083.html
         return (isReleaseNoteTag(issue) || issue.getSummary().toLowerCase().trim().startsWith("release note"))
                 && isDelivered(issue);
     }

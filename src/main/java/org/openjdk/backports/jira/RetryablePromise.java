@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2022, Red Hat, Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,40 +24,49 @@
  */
 package org.openjdk.backports.jira;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
-import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.RestClientException;
 import io.atlassian.util.concurrent.Promise;
 
-import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
-public class RetryableIssuePromise extends RetryablePromise<Issue> implements IssuePromise {
-    private final Issues issues;
-    private final IssueRestClient cli;
-    private final String key;
-    private final boolean full;
+public abstract class RetryablePromise<T> {
 
-    public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key, boolean full) {
-        this.issues = issues;
-        this.cli = cli;
-        this.key = key;
-        this.full = full;
-        init();
+    private Promise<T> cur;
+
+    protected abstract Promise<T> get();
+
+    protected void init() {
+        cur = get();
     }
 
-    protected Promise<Issue> get() {
-        if (full) {
-            return cli.getIssue(key, Collections.singleton(IssueRestClient.Expandos.CHANGELOG));
-        } else {
-            return cli.getIssue(key);
+    public T claim() {
+        for (int t = 0; t < 10; t++) {
+            try {
+                return cur.claim();
+            } catch (Exception e) {
+                if (isValidError(e)) {
+                    throw e;
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep((1 + t*t)*100);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+                cur = get();
+            }
         }
+        return cur.claim();
     }
 
-    public Issue claim() {
-        Issue issue = super.claim();
-        if (issue != null && issues != null) {
-            issues.registerIssueCache(key, issue);
+    private boolean isValidError(Exception e) {
+        if (e instanceof RestClientException) {
+            RestClientException rce = (RestClientException) e;
+            Integer errCode = rce.getStatusCode().orNull();
+            if (errCode != null) {
+                return errCode >= 400 && errCode < 500;
+            }
         }
-        return issue;
+        return false;
     }
 
 }

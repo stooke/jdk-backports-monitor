@@ -28,25 +28,25 @@ public class Versions {
 
     public static int parseMajor(String version) {
         if (version.equals("solaris_10u7")) {
-            // Special-case odd issue: https://bugs.openjdk.java.net/browse/JDK-6913047
+            // Special-case odd issue: https://bugs.openjdk.org/browse/JDK-6913047
             return 0;
         }
 
         if (version.startsWith("hs")) {
             // Special case odd issues that reference Hotspot versions:
-            //  https://bugs.openjdk.java.net/browse/JDK-8035493
+            //  https://bugs.openjdk.org/browse/JDK-8035493
             return 0;
         }
 
         if (version.startsWith("emb-")) {
             // Special case odd issues that reference embedded versions:
-            //  https://bugs.openjdk.java.net/browse/JDK-8042557
+            //  https://bugs.openjdk.org/browse/JDK-8042557
             return 0;
         }
 
         if (version.equals("8-aarch64")) {
             // Special case odd issues that reference old pre-integration 8-aarch64 versions:
-            //  https://bugs.openjdk.java.net/browse/JDK-8236179
+            //  https://bugs.openjdk.org/browse/JDK-8236179
             return 0;
         }
 
@@ -159,8 +159,22 @@ public class Versions {
         return false;
     }
 
+    public static boolean isMaintenanceRelease(String version) {
+        // These are 8u MR releases:
+        //   MR1-MR2: 8u40 (technically the part of usual JDK 8 release chain, so excluded here)
+        //   MR3: 8u41
+        //   MR4: 8u42
+        int minor = parseMinor(version);
+        if (parseMajor(version) == 8 &&
+                41 <= minor && minor <= 42) {
+            return true;
+        }
+
+        return false;
+    }
+
     public static boolean isOpen(String version) {
-        return !isOracle(version);
+        return !isOracle(version) && !isMaintenanceRelease(version);
     }
 
     public static boolean isShared(String version) {

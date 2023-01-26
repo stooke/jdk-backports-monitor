@@ -24,40 +24,24 @@
  */
 package org.openjdk.backports.jira;
 
-import com.atlassian.jira.rest.client.api.IssueRestClient;
-import com.atlassian.jira.rest.client.api.domain.Issue;
+import com.atlassian.jira.rest.client.api.UserRestClient;
+import com.atlassian.jira.rest.client.api.domain.User;
 import io.atlassian.util.concurrent.Promise;
 
-import java.util.Collections;
+public class RetryableUserPromise extends RetryablePromise<User> {
 
-public class RetryableIssuePromise extends RetryablePromise<Issue> implements IssuePromise {
-    private final Issues issues;
-    private final IssueRestClient cli;
-    private final String key;
-    private final boolean full;
+    private final UserRestClient userCli;
+    private final String user;
 
-    public RetryableIssuePromise(Issues issues, IssueRestClient cli, String key, boolean full) {
-        this.issues = issues;
-        this.cli = cli;
-        this.key = key;
-        this.full = full;
+    public RetryableUserPromise(UserRestClient userCli, String user) {
+        this.userCli = userCli;
+        this.user = user;
         init();
     }
 
-    protected Promise<Issue> get() {
-        if (full) {
-            return cli.getIssue(key, Collections.singleton(IssueRestClient.Expandos.CHANGELOG));
-        } else {
-            return cli.getIssue(key);
-        }
-    }
-
-    public Issue claim() {
-        Issue issue = super.claim();
-        if (issue != null && issues != null) {
-            issues.registerIssueCache(key, issue);
-        }
-        return issue;
+    @Override
+    protected Promise<User> get() {
+        return userCli.getUser(user);
     }
 
 }
