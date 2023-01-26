@@ -33,7 +33,6 @@ import org.openjdk.backports.report.model.*;
 import org.openjdk.backports.report.text.*;
 
 import java.io.File;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -61,6 +60,9 @@ public class Main {
                     }
                     user = p.getProperty("user");
                     pass = p.getProperty("pass");
+                } else {
+                    user = System.getenv().getOrDefault("OPENJDK_USER", null);
+                    pass = System.getenv().getOrDefault("OPENJDK_PASSWORD", null);
                 }
 
                 if (options.getOutputFilename() != null && !options.getOutputFilename().equals("-")) {
