@@ -49,8 +49,7 @@ public class Main {
 
         try {
             if (options.parse()) {
-                String user = null;
-                String pass = null;
+                Auth auth = null;
                 if (new File(options.getAuthProps()).exists()) {
                     Properties p = new Properties();
                     try (FileInputStream fis = new FileInputStream(options.getAuthProps())){
@@ -58,18 +57,20 @@ public class Main {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                    user = p.getProperty("user");
-                    pass = p.getProperty("pass");
+                    auth = new Auth(p.getProperty("user"), p.getProperty("pass"));
                 } else {
-                    user = System.getenv().getOrDefault("OPENJDK_USER", null);
-                    pass = System.getenv().getOrDefault("OPENJDK_PASSWORD", null);
+                    auth = new Auth(
+                        System.getenv().getOrDefault("OPENJDK_USER", null),
+                        System.getenv().getOrDefault("OPENJDK_PASSWORD", null)
+                    );
                 }
 
                 if (options.getOutputFilename() != null && !options.getOutputFilename().equals("-")) {
                     out = new PrintStream(options.getOutputFilename());
                 }
 
-                try (Clients cli = Connect.getClients(JIRA_URL, user, pass)) {
+                try (Clients cli = Connect.getClients(JIRA_URL, auth, options.getMaxConnections())) {
+
                     PrintStream debugLog = System.out;
                     String logPrefix = options.getLogPrefix();
 
@@ -77,6 +78,14 @@ public class Main {
                     if (options.getHgRepos() != null) {
                         hgDB.load(options.getHgRepos());
                     }
+
+                    debugLog.print("Authentication: ");
+                    if (auth.isAnonymous()) {
+                        debugLog.println("anonymous");
+                    } else {
+                        debugLog.println("as " + auth.getUser());
+                    }
+                    debugLog.println();
 
                     if (options.getLabelReport() != null) {
                         LabelModel m = new LabelModel(cli, hgDB, debugLog, options.getMinLevel(), options.getLabelReport());

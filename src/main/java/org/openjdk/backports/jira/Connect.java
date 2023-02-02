@@ -38,6 +38,7 @@ import com.atlassian.jira.rest.client.internal.async.DisposableHttpClient;
 import com.atlassian.sal.api.ApplicationProperties;
 import com.atlassian.sal.api.UrlMode;
 import com.atlassian.sal.api.executor.ThreadLocalContextManager;
+import org.openjdk.backports.Auth;
 
 import java.io.File;
 import java.net.URI;
@@ -50,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Connect {
 
-    public static Clients getClients(String jiraURL, String user, String pass) throws URISyntaxException {
+    public static Clients getClients(String jiraURL, Auth auth, int maxConnections) throws URISyntaxException {
         final URI uri = new URI(jiraURL);
 
         DefaultHttpClientFactory factory = new DefaultHttpClientFactory(
@@ -73,19 +74,24 @@ public class Connect {
         opts.setMaxCacheEntries(5_000);
         opts.setMaxCacheObjectSize(100_000);
 
+        // Make sure we do not overwhelm the target with too many concurrent
+        // requests. Limiting the number of connections should do the trick,
+        // assuming similar request rate per connection.
+        opts.setMaxTotalConnections(maxConnections);
+
         // Make sure we have enough threads to process the requests.
         // Choose the most scalable executor availabe.
         opts.setCallbackExecutor(Executors.newWorkStealingPool());
 
         HttpClient client = factory.create(opts);
 
-        AuthenticationHandler auth;
-        if (user != null && pass != null) {
-            auth = new BasicHttpAuthenticationHandler(user, pass);
+        AuthenticationHandler authHandler;
+        if (auth.isAnonymous()) {
+            authHandler = new AnonymousAuthenticationHandler();
         } else {
-            auth = new AnonymousAuthenticationHandler();
+            authHandler = new BasicHttpAuthenticationHandler(auth.getUser(), auth.getPass());
         }
-        DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(client, auth) {
+        DisposableHttpClient dispClient = new AtlassianHttpClientDecorator(client, authHandler) {
             @Override public void destroy() throws Exception { factory.dispose(client); }
         };
 

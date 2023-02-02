@@ -54,6 +54,7 @@ public class Options {
     private String outputFilename;
     private String issueListString;
     private final Vector<String> issueList = new Vector<>(10);
+    private int maxConnections;
 
     public Options(String[] args) {
         this.args = args;
@@ -127,6 +128,9 @@ public class Options {
                 .withRequiredArg().ofType(String.class).describedAs("filename");
 
         OptionSpec<Void> optVerboseReports = parser.accepts("verbose", "Create verbose reports (where implemented)");
+        OptionSpec<Integer> optMaxConnections = parser.accepts("max-connections",
+                        "Max connections to have to remote JIRA server.")
+                .withRequiredArg().ofType(Integer.class).describedAs("#").defaultsTo(20);
 
         parser.accepts("h", "Print this help.");
 
@@ -172,6 +176,8 @@ public class Options {
         verboseReports = set.has(optVerboseReports);
         outputFilename = set.has(optOutputFilename) ? optOutputFilename.value(set) : "-";
         issueListString = optIssueList.value(set);
+
+        maxConnections = set.valueOf(optMaxConnections);
 
         return true;
     }
@@ -239,5 +245,9 @@ public class Options {
 
     public String getLogPrefix() {
         return logPrefix;
+    }
+
+    public int getMaxConnections() {
+        return maxConnections;
     }
 }
