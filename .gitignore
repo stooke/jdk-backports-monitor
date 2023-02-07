@@ -1,5 +1,9 @@
 target/
 .idea/
+.vscode
 auth.props
 *.iml
+output.csv
+output.txt
+output.html
 data
