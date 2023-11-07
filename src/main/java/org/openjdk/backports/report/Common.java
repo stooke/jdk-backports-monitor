@@ -31,8 +31,8 @@ import java.util.Comparator;
 public class Common {
 
     // JDK versions we care for in backports
-    protected static final int[] VERSIONS_TO_CARE_FOR = {8, 11, 17};
-    protected static final int[] VERSIONS_TO_CARE_FOR_REV = {17, 11, 8};
+    protected static final int[] VERSIONS_TO_CARE_FOR = {8, 11, 17, 21};
+    protected static final int[] VERSIONS_TO_CARE_FOR_REV = {21, 17, 11, 8};
 
     // Issue bake time before backport is considered
     protected static final int ISSUE_BAKE_TIME_DAYS = 10;
@@ -48,6 +48,7 @@ public class Common {
             case 8:
             case 11:
             case 17:
+            case 21:
                 return 10;
             case 13:
             case 15:
@@ -63,6 +64,7 @@ public class Common {
             case 8:
             case 11:
             case 17:
+            case 21:
                 return 50;
             case 13:
             case 15:
@@ -78,6 +80,7 @@ public class Common {
             case 8:
             case 11:
             case 17:
+            case 21:
                 return 30;
             case 13:
             case 15:
